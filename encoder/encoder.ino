@@ -17,7 +17,7 @@ void setup() {
   pinMode(M2B, INPUT);
 
   attachInterrupt(digitalPinToInterrupt(M1A), updateEncoder1, RISING);
-  attachInterrupt(digitalPinToInterrupt(M2A), updateEncoder2, RISING);
+  attachInterrupt(digitalPinToInterrupt(M2A), updateEncoderL, RISING);
 }
 
 void loop() {
@@ -35,7 +35,7 @@ void updateEncoder1() {
   }
 }
 
-void updateEncoder2() {
+void updateEncoderL() {
   if (digitalRead(M2B) == LOW) {
     encoder2++;
   } else {
