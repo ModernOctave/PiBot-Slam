@@ -1,5 +1,7 @@
 #define RIGHT 0
 #define LEFT 1
+#define M_PI 3.14159265358979323846
+#define WHEELDIAMETER 6.5
 
 
 // Motor
@@ -17,12 +19,13 @@
 #define M2A 34
 #define M2B 35
 #define COUNTTPERCM 9.9
+#define OMEGASAMPLEFREQ 10
 
 int encoderR = 0;
-int prev_distanceR = 0;
+double prev_distanceR = 0;
 double omegaR = 0;
 int encoderL = 0;
-int prev_distanceL = 0;
+double prev_distanceL = 0;
 double omegaL = 0;
 
 void updateEncoderR();
@@ -55,7 +58,7 @@ void wheelSetup() {
   // Timer
   timer = timerBegin(0, 80, true);
   timerAttachInterrupt(timer, &updateOmega, true);
-  timerAlarmWrite(timer, 1000000, true);
+  timerAlarmWrite(timer, 1000000/OMEGASAMPLEFREQ, true);
   timerAlarmEnable(timer);
 }
 
@@ -63,9 +66,8 @@ void wheelSetup() {
 // Motor functions
 void motorWrite(int motor, int speed) {
   int enable, in_a, in_b;
-  speed = max(min(speed, 100), -100);
-  speed = map(speed, 0, 100, 0, 255);
-  if (motor == RIGHT) {
+  speed = max(min(speed, 255), -255);
+  if (motor == LEFT) {
     enable = ENA;
     in_a = IN1;
     in_b = IN2;
@@ -82,7 +84,7 @@ void motorWrite(int motor, int speed) {
     digitalWrite(in_b, LOW);
   }
   else {
-    analogWrite(enable, speed);
+    analogWrite(enable, -1*speed);
     digitalWrite(in_a, LOW);
     digitalWrite(in_b, HIGH);
   }
@@ -106,20 +108,20 @@ void updateEncoderL() {
   }
 }
 
-int getDist(int motor) {
+double getDist(int motor) {
   if (motor == RIGHT) {
-    return encoderR/COUNTTPERCM/100;
+    return encoderR/COUNTTPERCM;
   }
   else {
-    return encoderL/COUNTTPERCM/100;
+    return encoderL/COUNTTPERCM;
   }
 }
 
 void IRAM_ATTR updateOmega(){
-  int distanceR = getDist(RIGHT);
-  int distanceL = getDist(LEFT);
-  omegaR = (distanceR - prev_distanceR);
-  omegaL = (distanceL - prev_distanceL);
+  double distanceR = getDist(RIGHT);
+  double distanceL = getDist(LEFT);
+  omegaR = (distanceR - prev_distanceR)/(M_PI*WHEELDIAMETER)*OMEGASAMPLEFREQ;
+  omegaL = (distanceL - prev_distanceL)/(M_PI*WHEELDIAMETER)*OMEGASAMPLEFREQ;
   prev_distanceR = distanceR;
   prev_distanceL = distanceL;
 }
