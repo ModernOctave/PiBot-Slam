@@ -20,7 +20,7 @@
 #define M2A 34
 #define M2B 35
 #define COUNTTPERCM 9.9
-#define OMEGASAMPLEFREQ 10
+#define OMEGASAMPLEFREQ 5
 
 int encoderR = 0;
 double prev_distanceR = 0;

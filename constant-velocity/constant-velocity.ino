@@ -14,9 +14,11 @@ void setup()
   wheelSetup();
 
   SetpointR = 0;
-  SetpointL = 0.3;
+  SetpointL = -1;
   PIDR.SetMode(AUTOMATIC);
   PIDL.SetMode(AUTOMATIC);
+  PIDR.SetOutputLimits(-255, 255);
+  PIDL.SetOutputLimits(-255, 255);
 }
 
 void loop()
@@ -25,4 +27,5 @@ void loop()
   PIDL.Compute();
   motorWrite(RIGHT, setR);
   motorWrite(LEFT, setL);
+  Serial.println(SetpointL);
 }
