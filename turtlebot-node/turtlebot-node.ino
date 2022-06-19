@@ -1,4 +1,5 @@
 #define TCP false
+#define BAUD 115200
 
 #if TCP
   #include "ArduinoTcpHardware.h"
@@ -10,7 +11,12 @@
 #include <PID_v1.h>
 #include <WiFi.h>
 #include <ros.h>
+#include <ros/time.h>
+#include <tf/tf.h>
+#include <tf/transform_broadcaster.h>
 #include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
+#include <geometry_msgs/Vector3.h>
 
 
 #if TCP
@@ -18,25 +24,31 @@
   const char *ssid = "Redmi 9";
   const char *password = "123456789";
   IPAddress server(192, 168, 43, 94);
-  const uint16_t serverPort = 11311;
+  const uint16_t serverPort = 11411;
 #endif
 
+long currentMillis = 0, previousMillis = 0;
 
 // PID variables (180,180,0)
 double SetpointR = 0, SetpointL = 0, setR = 0, setL = 0;
-double Kp = 60, Ki = 300, Kd = 0;
+double Kp = 0, Ki = 300, Kd = 0;
 PID PIDR(&omegaR, &setR, &SetpointR, Kp, Ki, Kd, DIRECT);
 PID PIDL(&omegaL, &setL, &SetpointL, Kp, Ki, Kd, DIRECT);
 
 
 // ROS
-float x, z;
 ros::NodeHandle nh;
+geometry_msgs::TransformStamped t;
+nav_msgs::Odometry odom_msg;
+ros::Publisher odom_pub("odom", &odom_msg);
+tf::TransformBroadcaster broadcaster;
+
+float x, z;
 
 void velCallback(const geometry_msgs::Twist& vel)
 {
-  x = vel.linear.x;
-  z = vel.angular.z;
+  x = vel.linear.x;   // In meter per second
+  z = vel.angular.z;  // In radian per second
 }
 
 ros::Subscriber<geometry_msgs::Twist> vel_sub("/cmd_vel", &velCallback);
@@ -44,9 +56,9 @@ ros::Subscriber<geometry_msgs::Twist> vel_sub("/cmd_vel", &velCallback);
 
 void setup()
 {
-  Serial.begin(57600);
+  Serial.begin(BAUD);
 
-  #if tcp
+  #if TCP
     Serial.println();
     Serial.print("Connecting to ");
     Serial.println(ssid);
@@ -66,7 +78,7 @@ void setup()
     // Set the connection to rosserial socket server
     nh.getHardware()->setConnection(server, serverPort);
   #else
-    nh.getHardware()->setBaud(57600);
+    nh.getHardware()->setBaud(BAUD);
   #endif
 
   // Wheel driver setup
@@ -81,19 +93,52 @@ void setup()
   // ROS node setup
   nh.initNode();
   nh.subscribe(vel_sub);
+  broadcaster.init(nh);
 }
 
 void loop()
 {
-  // SetpointR = (x - z * AXIL_LENGTH / 2) / (WHEELDIAMETER / 2);
-  // SetpointL = (x + z * AXIL_LENGTH / 2) / (WHEELDIAMETER / 2);
-  SetpointR = 2;
-  Serial.println(SetpointR - omegaR);
+  // Calculate Setpoints in revolutions per second
+  // We get value in radians per second by kinematics equations
+  // 2*pi radians per revolution
+  // Hence divide by 2*pi to get revolutions per second
+  SetpointR = (x * 100 - z * AXIL_LENGTH / 2) / (WHEELDIAMETER / 2) / (2 * PI);
+  SetpointL = (x * 100 + z * AXIL_LENGTH / 2) / (WHEELDIAMETER / 2) / (2 * PI);
+  // Serial.println(SetpointR - omegaR);
 
   PIDR.Compute();
   PIDL.Compute();
   motorWrite(RIGHT, setR);
   motorWrite(LEFT, setL);
 
+  currentMillis = millis();
+  if (currentMillis - previousMillis >= 1000)
+  {
+    previousMillis = currentMillis;
+    // Broadcast the transform
+    t.header.stamp = nh.now();
+    t.header.frame_id = "/odom";
+    t.child_frame_id = "/base_link";
+    t.transform.translation.x = pose_x / 100;
+    t.transform.translation.y = pose_y / 100;
+    t.transform.translation.z = 0;
+    t.transform.rotation = tf::createQuaternionFromYaw(pose_theta);
+    broadcaster.sendTransform(t);
+
+
+    // Publish the odometry
+    nav_msgs::Odometry odom_msg;
+    odom_msg.header.stamp = nh.now();
+    odom_msg.header.frame_id = "/odom";
+    odom_msg.pose.pose.position.x = pose_x / 100;
+    odom_msg.pose.pose.position.y = pose_y / 100; 
+    odom_msg.pose.pose.orientation = tf::createQuaternionFromYaw(pose_theta);
+    odom_msg.twist.twist.linear.x = (velocityR + velocityL) / 2;
+    odom_msg.twist.twist.angular.z = (velocityR - velocityL) / AXIL_LENGTH;
+    // odom_pub.publish(&odom_msg);
+  }
+
+
+  // ROS
   nh.spinOnce();
 }

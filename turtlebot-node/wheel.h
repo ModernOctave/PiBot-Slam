@@ -24,10 +24,12 @@
 
 int encoderR = 0;
 double prev_distanceR = 0;
-double omegaR = 0;
+double omegaR = 0, displacementR = 0, velocityR = 0;
 int encoderL = 0;
 double prev_distanceL = 0;
-double omegaL = 0;
+double omegaL = 0, displacementL = 0, velocityL = 0;
+double base_linear_disp = 0, base_angular_disp = 0;
+double pose_x = 0, pose_y = 0, pose_theta = 0;
 
 void updateEncoderR();
 void updateEncoderL();
@@ -111,18 +113,30 @@ void updateEncoderL() {
 
 double getDist(int motor) {
   if (motor == RIGHT) {
-    return encoderR/COUNTTPERCM;
+    return (double)encoderR/COUNTTPERCM;
   }
   else {
-    return encoderL/COUNTTPERCM;
+    return (double)encoderL/COUNTTPERCM;
   }
 }
 
 void IRAM_ATTR updateOmega(){
   double distanceR = getDist(RIGHT);
   double distanceL = getDist(LEFT);
+  displacementR = (distanceR - prev_distanceR);
+  displacementL = (distanceL - prev_distanceL);
+  velocityR = displacementR / 100 * OMEGASAMPLEFREQ;
+  velocityL = displacementL / 100 * OMEGASAMPLEFREQ;
   omegaR = (distanceR - prev_distanceR)/(M_PI*WHEELDIAMETER)*OMEGASAMPLEFREQ;
   omegaL = (distanceL - prev_distanceL)/(M_PI*WHEELDIAMETER)*OMEGASAMPLEFREQ;
   prev_distanceR = distanceR;
   prev_distanceL = distanceL;
+
+  // Calculate the current position of the robot
+  base_linear_disp = (displacementR + displacementL) / 2;
+  base_angular_disp = (displacementR - displacementL) / AXIL_LENGTH;
+  pose_x += base_linear_disp * cos(pose_theta + base_angular_disp/2);
+  pose_y += base_linear_disp * sin(pose_theta + base_angular_disp/2);
+  pose_theta += base_angular_disp;
+  pose_theta = fmod(pose_theta, 2*PI);
 }
