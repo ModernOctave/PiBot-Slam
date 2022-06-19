@@ -1,4 +1,4 @@
-#define TCP false
+#define TCP true
 #define BAUD 115200
 
 #if TCP
@@ -7,6 +7,7 @@
   #include "ArduinoHardware.h"
 #endif
 
+#include "env.h"
 #include "wheel.h"
 #include <PID_v1.h>
 #include <WiFi.h>
@@ -21,17 +22,17 @@
 
 #if TCP
   // WiFi Variables
-  const char *ssid = "Redmi 9";
-  const char *password = "123456789";
+  const char *ssid = SSID;
+  const char *password = PASSWORD;
   IPAddress server(192, 168, 43, 94);
   const uint16_t serverPort = 11411;
 #endif
 
 long currentMillis = 0, previousMillis = 0;
 
-// PID variables (180,180,0)
+// PID variables (0,300,0)
 double SetpointR = 0, SetpointL = 0, setR = 0, setL = 0;
-double Kp = 0, Ki = 300, Kd = 0;
+double Kp = 50, Ki = 300, Kd = 0;
 PID PIDR(&omegaR, &setR, &SetpointR, Kp, Ki, Kd, DIRECT);
 PID PIDL(&omegaL, &setL, &SetpointL, Kp, Ki, Kd, DIRECT);
 
@@ -102,8 +103,8 @@ void loop()
   // We get value in radians per second by kinematics equations
   // 2*pi radians per revolution
   // Hence divide by 2*pi to get revolutions per second
-  SetpointR = (x * 100 - z * AXIL_LENGTH / 2) / (WHEELDIAMETER / 2) / (2 * PI);
-  SetpointL = (x * 100 + z * AXIL_LENGTH / 2) / (WHEELDIAMETER / 2) / (2 * PI);
+  SetpointR = (x * 100 + z * AXIL_LENGTH / 2) / (WHEELDIAMETER / 2) / (2 * PI);
+  SetpointL = (x * 100 - z * AXIL_LENGTH / 2) / (WHEELDIAMETER / 2) / (2 * PI);
   // Serial.println(SetpointR - omegaR);
 
   PIDR.Compute();
@@ -112,7 +113,7 @@ void loop()
   motorWrite(LEFT, setL);
 
   currentMillis = millis();
-  if (currentMillis - previousMillis >= 1000)
+  if (currentMillis - previousMillis >= 10)
   {
     previousMillis = currentMillis;
     // Broadcast the transform

@@ -1,0 +1,7 @@
+{
+    "configuration": "FlashFreq=80,UploadSpeed=921600,DebugLevel=none",
+    "board": "esp32:esp32:nodemcu-32s",
+    "programmer": "esp32:esptool",
+    "port": "/dev/ttyUSB0",
+    "sketch": "turtlebot-node/turtlebot-node.ino"
+}
