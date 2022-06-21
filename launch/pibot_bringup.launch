@@ -1,7 +1,7 @@
 <launch>
 	<arg name="gui" default="false" />
 
-	<param name ="/use_sim_time" value="true"/>		
+	<param name ="/use_sim_time" value="false"/>		
 
 	<param name="use_gui" value="$(arg gui)"/>
 
@@ -11,9 +11,11 @@
 	
 	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 
+	<include file="$(find pibot-esp32)/launch/rplidar.launch" />
+
 	<node name="serial_node" pkg="rosserial_python" type="serial_node.py">
-		<param name="port" value="tcp"/>
-		<!-- <param name="port" value="/dev/ttyUSB0"/> -->
-		<!-- <param name="baud" value="115200"/> -->
+		<!-- <param name="port" value="tcp"/> -->
+		<param name="port" value="/dev/ttyUSB1"/>
+		<param name="baud" value="115200"/>
 	</node>
 </launch>

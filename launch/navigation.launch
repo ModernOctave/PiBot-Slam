@@ -2,10 +2,10 @@
 
 <launch>
 
-  <param name ="/use_sim_time" value="true"/>
+  <param name ="/use_sim_time" value="flase"/>
 
   <!-- map server -->
-  <arg name="map_file" default="$(find pibot-esp32)/maps/map.yaml"/>
+  <arg name="map_file" default="$(find pibot-esp32)/maps/lab.yaml"/>
   <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
 
   <!-- Place map frame at odometry -->
@@ -74,6 +74,6 @@
 
   
   <!-- Rviz Launch  -->
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find pibot-esp32)/rviz/navigation.rviz"/>
+  <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find pibot-esp32)/rviz/navigation.rviz"/> -->
 
 </launch>

@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
 
-	<param name ="/use_sim_time" value="true"/>	
+	<param name ="/use_sim_time" value="false"/>	
   
   <arg name="scan_topic"  default="scan" />
   <arg name="base_frame"  default="base_link"/>
   <arg name="odom_frame"  default="odom"/>
-  
+
+  <!-- Place map frame at odometry -->
+  <node name="map_odom_broadcaster" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 map odom 100"/>
+
   <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping" output="screen">
     <param name="base_frame" value="$(arg base_frame)"/>
     <param name="odom_frame" value="$(arg odom_frame)"/>
@@ -45,5 +48,5 @@
     <remap from="scan" to="$(arg scan_topic)"/>
   </node>
   
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find pibot-esp32)/rviz/gmapping.rviz" />
+  <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find pibot-esp32)/rviz/gmapping.rviz" /> -->
 </launch>
