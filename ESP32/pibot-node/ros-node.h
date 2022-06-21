@@ -1,5 +1,5 @@
 #define BAUD 115200
-#define TCP true
+#define TCP false
 #include "env.h"
 
 #if TCP
