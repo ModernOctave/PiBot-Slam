@@ -26,7 +26,7 @@ const uint16_t serverPort = 11411;
 ros::NodeHandle nh;
 geometry_msgs::TransformStamped t;
 nav_msgs::Odometry odom_msg;
-ros::Publisher odom_pub("odom", &odom_msg);
+ros::Publisher odom_pub("pibot_odom", &odom_msg);
 tf::TransformBroadcaster broadcaster;
 
 float x, z;

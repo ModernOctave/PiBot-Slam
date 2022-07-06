@@ -3,6 +3,7 @@
 #define M_PI 3.14159265358979323846
 #define WHEELDIAMETER 6.5
 #define AXIL_LENGTH 19.5
+#define K 1.1
 
 
 // Motor
@@ -19,7 +20,8 @@
 #define M1B 39
 #define M2A 34
 #define M2B 35
-#define COUNTTPERCM 9.9
+#define CPCR 10.26
+#define CPCL 10.16
 #define OMEGASAMPLEFREQ 5
 
 int encoderR = 0;
@@ -113,10 +115,10 @@ void updateEncoderL() {
 
 double getDist(int motor) {
   if (motor == RIGHT) {
-    return (double)encoderR/COUNTTPERCM;
+    return (double)encoderR/CPCR*K;
   }
   else {
-    return (double)encoderL/COUNTTPERCM;
+    return (double)encoderL/CPCL*K;
   }
 }
 
